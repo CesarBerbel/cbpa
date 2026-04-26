@@ -53,9 +53,7 @@ class SantanderImportTestCase(TestCase):
         )
 
         self.fixture_path = (
-            Path(__file__).resolve().parent
-            / "fixtures"
-            / "246__consolidado.txt"
+            Path(__file__).resolve().parent / "fixtures" / "246__consolidado.txt"
         )
 
     def test_fixture_file_exists(self):

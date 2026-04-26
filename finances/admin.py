@@ -1,6 +1,13 @@
 from django.contrib import admin
 
-from finances.models import Bank, FinancialAccount, FinancialMovement, FinancialTransfer,FinancialCategory,FinancialSubcategory
+from finances.models import (
+    Bank,
+    FinancialAccount,
+    FinancialMovement,
+    FinancialTransfer,
+    FinancialCategory,
+    FinancialSubcategory,
+)
 
 
 @admin.register(Bank)
@@ -103,6 +110,7 @@ class FinancialTransferAdmin(admin.ModelAdmin):
         "due_date",
     ]
 
+
 @admin.register(FinancialCategory)
 class FinancialCategoryAdmin(admin.ModelAdmin):
     """
@@ -151,4 +159,4 @@ class FinancialSubcategoryAdmin(admin.ModelAdmin):
         "name",
         "category__name",
         "company__name",
-    ]    
+    ]

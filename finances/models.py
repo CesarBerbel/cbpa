@@ -154,7 +154,7 @@ class FinancialMovement(models.Model):
     )
 
     category = models.ForeignKey(
-        'FinancialCategory',
+        "FinancialCategory",
         on_delete=models.PROTECT,
         null=True,
         blank=True,
@@ -163,7 +163,7 @@ class FinancialMovement(models.Model):
     )
 
     subcategory = models.ForeignKey(
-        'FinancialSubcategory',
+        "FinancialSubcategory",
         on_delete=models.PROTECT,
         null=True,
         blank=True,
@@ -375,8 +375,10 @@ class FinancialTransfer(models.Model):
         ordering = ["-due_date"]
 
     def __str__(self):
-        return f"{self.origin_account} -> {self.destination_account} - {self.amount} EUR"
-    
+        return (
+            f"{self.origin_account} -> {self.destination_account} - {self.amount} EUR"
+        )
+
 
 class BankStatementImport(models.Model):
     """
@@ -441,8 +443,8 @@ class BankStatementImport(models.Model):
         ordering = ["-date", "-created_at"]
 
     def __str__(self):
-        return f"{self.date} - {self.amount} - {self.get_status_display()}"    
-    
+        return f"{self.date} - {self.amount} - {self.get_status_display()}"
+
 
 class FinancialCategory(models.Model):
     """
@@ -458,10 +460,14 @@ class FinancialCategory(models.Model):
 
     movement_type = models.CharField(
         max_length=20,
-        choices=FinancialMovement.MovementType.choices if "FinancialMovement" in globals() else [
-            ("INCOME", "Entrada"),
-            ("EXPENSE", "Saída"),
-        ],
+        choices=(
+            FinancialMovement.MovementType.choices
+            if "FinancialMovement" in globals()
+            else [
+                ("INCOME", "Entrada"),
+                ("EXPENSE", "Saída"),
+            ]
+        ),
         verbose_name="Tipo de movimentação",
     )
 
@@ -531,4 +537,4 @@ class FinancialSubcategory(models.Model):
         ]
 
     def __str__(self):
-        return f"{self.category.name} > {self.name}"    
+        return f"{self.category.name} > {self.name}"

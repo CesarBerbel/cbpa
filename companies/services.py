@@ -15,8 +15,7 @@ def get_user_company(user):
         return user.company_profile
 
     membership = (
-        CompanyMembership.objects
-        .select_related("company")
+        CompanyMembership.objects.select_related("company")
         .filter(
             person=user,
             is_active=True,

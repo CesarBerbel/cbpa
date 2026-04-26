@@ -16,7 +16,7 @@ omit =
 [report]
 show_missing = True
 skip_covered = True
-fail_under = 70
+fail_under = 80
 
 [html]
 directory = htmlcov

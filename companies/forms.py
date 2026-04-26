@@ -110,9 +110,7 @@ class CompanyRegistrationForm(forms.Form):
             )
 
         if password1 and password2 and password1 != password2:
-            raise forms.ValidationError(
-                "As senhas não conferem."
-            )
+            raise forms.ValidationError("As senhas não conferem.")
 
         return cleaned_data
 
@@ -241,9 +239,7 @@ class PersonMembershipForm(forms.Form):
             cleaned_data["role"] = None
 
         if password1 and password2 and password1 != password2:
-            raise forms.ValidationError(
-                "As senhas não conferem."
-            )
+            raise forms.ValidationError("As senhas não conferem.")
 
         return cleaned_data
 

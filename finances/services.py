@@ -21,6 +21,7 @@ from finances.models import (
 # ENCODING
 # =========================================
 
+
 def decode_file_content(file_content):
     encodings = ["utf-8-sig", "utf-8", "cp1252", "latin-1"]
 
@@ -37,6 +38,7 @@ def decode_file_content(file_content):
 # DATE HELPERS
 # =========================================
 
+
 def get_month_start_and_end(year, month):
     start = date(year, month, 1)
     end = date(year, month, monthrange(year, month)[1])
@@ -46,6 +48,7 @@ def get_month_start_and_end(year, month):
 # =========================================
 # BALANCE (CORRIGIDO)
 # =========================================
+
 
 def calculate_account_projected_balance_until(account, end_date):
     """
@@ -99,9 +102,7 @@ def calculate_account_month_summary(account, year, month):
     is_past_month = month_start < current_month_start
 
     if is_past_month:
-        initial_balance = calculate_account_real_balance_until(
-            account, previous_day
-        )
+        initial_balance = calculate_account_real_balance_until(account, previous_day)
     else:
         initial_balance = calculate_account_projected_balance_until(
             account, previous_day
@@ -147,6 +148,7 @@ def calculate_account_month_summary(account, year, month):
 # DISPLAY
 # =========================================
 
+
 def get_movements_for_display_month(company, year, month, account=None):
     month_start, month_end = get_month_start_and_end(year, month)
 
@@ -161,8 +163,7 @@ def get_movements_for_display_month(company, year, month, account=None):
             paid_at__gte=month_start,
             paid_at__lte=month_end,
         )
-        |
-        models.Q(
+        | models.Q(
             paid_at__isnull=True,
             due_date__gte=month_start,
             due_date__lte=month_end,
@@ -173,6 +174,7 @@ def get_movements_for_display_month(company, year, month, account=None):
 # =========================================
 # MARK AS PAID
 # =========================================
+
 
 @transaction.atomic
 def mark_movement_as_paid(movement, payment_comment=""):
@@ -186,6 +188,7 @@ def mark_movement_as_paid(movement, payment_comment=""):
 # =========================================
 # CREATION
 # =========================================
+
 
 def get_manual_movement_initial_status(due_date):
     if due_date < timezone.localdate():
@@ -271,7 +274,9 @@ def create_installment_movements(
 
 
 @transaction.atomic
-def create_transfer(company, origin_account, destination_account, amount, due_date, description=""):
+def create_transfer(
+    company, origin_account, destination_account, amount, due_date, description=""
+):
     """
     Create a transfer between two accounts.
     """
@@ -325,9 +330,11 @@ def update_overdue_financial_movements():
         status=FinancialMovement.MovementStatus.OVERDUE,
     )
 
+
 # =========================================
 # IMPORT HELPERS (CORRIGIDO)
 # =========================================
+
 
 def build_statement_reference(account, movement_date, description, amount, line_number):
     raw = f"{account.id}|{movement_date}|{description}|{amount}|{line_number}"
@@ -418,6 +425,7 @@ def parse_santander_positional_statement(content):
 # =========================================
 # FIXED MOVEMENTS
 # =========================================
+
 
 def get_fixed_occurrence_due_date(template, year, month):
     """
@@ -518,6 +526,7 @@ def ensure_fixed_movements_for_month(company, year, month):
 # =========================================
 # IMPORT MAIN
 # =========================================
+
 
 @transaction.atomic
 def import_santander_portugal_consolidated_statement(company, account, file_content):

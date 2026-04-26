@@ -34,9 +34,7 @@ class UserAdmin(DjangoUserAdmin):
         "email",
     )
 
-    ordering = (
-        "full_name",
-    )
+    ordering = ("full_name",)
 
     fieldsets = (
         (
@@ -85,9 +83,7 @@ class UserAdmin(DjangoUserAdmin):
         (
             None,
             {
-                "classes": (
-                    "wide",
-                ),
+                "classes": ("wide",),
                 "fields": (
                     "nif",
                     "email",

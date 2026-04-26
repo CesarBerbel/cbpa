@@ -89,9 +89,7 @@ class FinanceViewsTestCase(TestCase):
         """
         Finance dashboard should redirect anonymous user to login.
         """
-        response = self.client.get(
-            reverse("finance_dashboard")
-        )
+        response = self.client.get(reverse("finance_dashboard"))
 
         self.assertEqual(response.status_code, 302)
         self.assertIn("/login/", response.url)
@@ -102,9 +100,7 @@ class FinanceViewsTestCase(TestCase):
         """
         self.client.force_login(self.owner_user)
 
-        response = self.client.get(
-            reverse("finance_dashboard")
-        )
+        response = self.client.get(reverse("finance_dashboard"))
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Financeiro")
@@ -115,9 +111,7 @@ class FinanceViewsTestCase(TestCase):
         """
         self.client.force_login(self.employee_user)
 
-        response = self.client.get(
-            reverse("finance_dashboard")
-        )
+        response = self.client.get(reverse("finance_dashboard"))
 
         self.assertEqual(response.status_code, 200)
 

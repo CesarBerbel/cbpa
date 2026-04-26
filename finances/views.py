@@ -133,7 +133,7 @@ def finance_dashboard_view(request):
             "selected_month": selected_month,
             "previous_month": previous_month,
             "next_month": next_month,
-            "current_month": current_month,            
+            "current_month": current_month,
         },
     )
 

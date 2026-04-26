@@ -82,16 +82,12 @@ def add_person_view(request):
             company=company,
         )
 
-    memberships = (
-        CompanyMembership.objects
-        .select_related(
-            "person",
-            "role",
-        )
-        .filter(
-            company=company,
-            is_active=True,
-        )
+    memberships = CompanyMembership.objects.select_related(
+        "person",
+        "role",
+    ).filter(
+        company=company,
+        is_active=True,
     )
 
     return render(

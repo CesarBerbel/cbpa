@@ -64,7 +64,9 @@ class FinancialAccountForm(forms.ModelForm):
                 is_active=True,
             )
 
-            self.fields["holder"].queryset = self.fields["holder"].queryset.model.objects.filter(
+            self.fields["holder"].queryset = self.fields[
+                "holder"
+            ].queryset.model.objects.filter(
                 id__in=[
                     company_user.id,
                     *linked_people,
@@ -220,7 +222,9 @@ class FinancialMovementForm(forms.Form):
                 raise forms.ValidationError("Informe o número de parcelas.")
 
             if not amount_mode:
-                raise forms.ValidationError("Informe se o valor é total ou por parcela.")
+                raise forms.ValidationError(
+                    "Informe se o valor é total ou por parcela."
+                )
 
         return cleaned_data
 
@@ -289,14 +293,18 @@ class FinancialTransferForm(forms.Form):
         origin_account = cleaned_data.get("origin_account")
         destination_account = cleaned_data.get("destination_account")
 
-        if origin_account and destination_account and origin_account == destination_account:
+        if (
+            origin_account
+            and destination_account
+            and origin_account == destination_account
+        ):
             raise forms.ValidationError(
                 "A conta de origem não pode ser igual à conta de destino."
             )
 
         return cleaned_data
-    
-    
+
+
 class MarkMovementAsPaidForm(forms.Form):
     """
     Form used to mark a movement as paid.
@@ -320,7 +328,7 @@ class MarkMovementAsPaidForm(forms.Form):
                 "rows": 3,
             }
         ),
-    )    
+    )
 
 
 class BankStatementImportForm(forms.Form):
@@ -385,4 +393,4 @@ class FinancialSubcategoryForm(forms.ModelForm):
             self.fields["category"].queryset = FinancialCategory.objects.filter(
                 company=company,
                 is_active=True,
-            )            
+            )

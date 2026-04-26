@@ -7,6 +7,7 @@ on:
       - master
       - develop
   pull_request:
+  workflow_dispatch:
 
 jobs:
   tests:
@@ -29,7 +30,15 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install coverage
+          pip install black flake8 coverage
+
+      - name: Check code formatting with Black
+        run: |
+          black --check accounts companies dashboard finances cbpa
+
+      - name: Run Flake8
+        run: |
+          flake8 accounts companies dashboard finances cbpa
 
       - name: Run Django checks
         run: |

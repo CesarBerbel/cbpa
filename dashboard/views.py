@@ -1,7 +1,11 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
 
-from companies.services import get_user_company, get_user_membership, user_is_company_owner
+from companies.services import (
+    get_user_company,
+    get_user_membership,
+    user_is_company_owner,
+)
 
 
 def home_view(request):

@@ -193,8 +193,14 @@ class FinanceServiceTestCase(TestCase):
         )
 
         self.assertIsInstance(transfer, FinancialTransfer)
-        self.assertEqual(transfer.origin_movement.movement_type, FinancialMovement.MovementType.EXPENSE)
-        self.assertEqual(transfer.destination_movement.movement_type, FinancialMovement.MovementType.INCOME)
+        self.assertEqual(
+            transfer.origin_movement.movement_type,
+            FinancialMovement.MovementType.EXPENSE,
+        )
+        self.assertEqual(
+            transfer.destination_movement.movement_type,
+            FinancialMovement.MovementType.INCOME,
+        )
         self.assertEqual(transfer.origin_movement.amount, Decimal("200.00"))
         self.assertEqual(transfer.destination_movement.amount, Decimal("200.00"))
 
