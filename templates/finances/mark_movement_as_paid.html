@@ -1,0 +1,40 @@
+{% extends "base/base.html" %}
+
+{% load crispy_forms_tags %}
+
+{% block content %}
+
+<div class="mb-4">
+    <h1 class="h4 mb-1">
+        Efetuar movimento
+    </h1>
+
+    <p class="text-muted mb-0">
+        {{ movement.description|default:"Movimento sem descrição" }} |
+        {{ movement.amount }} EUR |
+        Vencimento: {{ movement.due_date }}
+    </p>
+</div>
+
+<div class="alert alert-info">
+    A data de efetivação será preenchida automaticamente com a data corrente.
+    Use o comentário para manter rastreabilidade quando o pagamento estiver sendo efetuado fora do mês de vencimento.
+</div>
+
+<form method="post" class="card card-body shadow-sm border-0" novalidate>
+    {% csrf_token %}
+
+    {{ form|crispy }}
+
+    <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-success">
+            Confirmar efetivação
+        </button>
+
+        <a href="{% url 'finance_dashboard' %}" class="btn btn-outline-secondary">
+            Cancelar
+        </a>
+    </div>
+</form>
+
+{% endblock %}

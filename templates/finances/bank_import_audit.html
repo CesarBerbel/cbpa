@@ -1,0 +1,64 @@
+{% extends "base/base.html" %}
+
+{% block content %}
+
+<h1 class="h4 mb-4">Auditoria de Importação</h1>
+
+<div class="table-responsive">
+<table class="table table-sm align-middle">
+    <thead>
+        <tr>
+            <th class="fw-semibold">Data</th>
+            <th class="fw-semibold">Conta</th>
+            <th class="fw-semibold">Descrição</th>
+            <th class="fw-semibold text-end">Valor</th>
+            <th class="fw-semibold text-center">Status</th>
+            <th class="fw-semibold text-center">Movimento</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        {% for item in imports %}
+        <tr>
+            <td>{{ item.date|date:"d/m/y" }}</td>
+
+            <td>{{ item.account.name }}</td>
+
+            <td>{{ item.description }}</td>
+
+            <td class="text-end">
+                {% if item.amount >= 0 %}
+                    <span class="text-success">+ {{ item.amount }}</span>
+                {% else %}
+                    <span class="text-danger">- {{ item.amount }}</span>
+                {% endif %}
+            </td>
+
+            <td class="text-center">
+                {% if item.status == "IMPORTED" %}
+                    <span class="badge bg-primary">Importado</span>
+                {% elif item.status == "MATCHED" %}
+                    <span class="badge bg-success">Conciliado</span>
+                {% elif item.status == "DUPLICATED" %}
+                    <span class="badge bg-secondary">Duplicado</span>
+                {% else %}
+                    <span class="badge bg-danger">Erro</span>
+                {% endif %}
+            </td>
+
+            <td class="text-center">
+                {% if item.movement %}
+                    <a href="{% url 'financial_account_detail' item.account.id %}">
+                        <i class="bi bi-box-arrow-up-right"></i>
+                    </a>
+                {% else %}
+                    -
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+</div>
+
+{% endblock %}

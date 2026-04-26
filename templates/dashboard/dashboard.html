@@ -1,0 +1,119 @@
+{% extends "base/base.html" %}
+
+{% block content %}
+
+<div class="mb-4">
+    <h1 class="h3 mb-1">
+        Dashboard
+    </h1>
+
+    <p class="text-muted mb-0">
+        Bem-vindo, {{ request.user.full_name }}.
+    </p>
+</div>
+
+{% if company %}
+
+    <div class="row g-4">
+
+        <div class="col-md-6 col-xl-4">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body">
+
+                    <h2 class="h5">
+                        Empresa
+                    </h2>
+
+                    <p class="mb-1">
+                        <strong>Nome:</strong> {{ company.name }}
+                    </p>
+
+                    <p class="mb-1">
+                        <strong>NIF:</strong> {{ company.nif }}
+                    </p>
+
+                    <p class="mb-0">
+                        <strong>Email:</strong>
+                        {% if company.email %}
+                            {{ company.email }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </p>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-xl-4">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body">
+
+                    <h2 class="h5">
+                        Seu vínculo
+                    </h2>
+
+                    {% if membership %}
+                        <p class="mb-1">
+                            <strong>Tipo:</strong> {{ membership.get_membership_type_display }}
+                        </p>
+
+                        <p class="mb-0">
+                            <strong>Cargo:</strong>
+                            {% if membership.role %}
+                                {{ membership.role.name }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </p>
+                    {% elif request.user.is_company %}
+                        <p class="mb-0">
+                            Usuário principal da empresa.
+                        </p>
+                    {% else %}
+                        <p class="text-muted mb-0">
+                            Nenhum vínculo encontrado.
+                        </p>
+                    {% endif %}
+
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-12 col-xl-4">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body">
+
+                    <h2 class="h5">
+                        Ações rápidas
+                    </h2>
+
+                    <div class="d-grid gap-2">
+
+                        {% if is_owner %}
+                            <a href="{% url 'add_person' %}" class="btn btn-outline-primary">
+                                Adicionar pessoa
+                            </a>
+                        {% endif %}
+
+                        <a href="/financeiro/" class="btn btn-outline-success">
+                            Financeiro
+                        </a>
+
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+{% else %}
+
+    <div class="alert alert-warning">
+        Este usuário ainda não está vinculado a nenhuma empresa.
+    </div>
+
+{% endif %}
+
+{% endblock %}

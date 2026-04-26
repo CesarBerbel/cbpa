@@ -1,0 +1,27 @@
+{% extends "base/base.html" %}
+
+{% load crispy_forms_tags %}
+
+{% block content %}
+
+<h1 class="h4 mb-4">
+    Nova conta financeira
+</h1>
+
+<form method="post" class="card card-body shadow-sm border-0" novalidate>
+    {% csrf_token %}
+
+    {{ form|crispy }}
+
+    <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary">
+            Salvar
+        </button>
+
+        <a href="{% url 'finance_dashboard' %}" class="btn btn-outline-secondary">
+            Cancelar
+        </a>
+    </div>
+</form>
+
+{% endblock %}

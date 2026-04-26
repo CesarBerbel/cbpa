@@ -1,0 +1,45 @@
+{% extends "base/base.html" %}
+
+{% load crispy_forms_tags %}
+
+{% block content %}
+
+<div class="mb-4">
+    <h1 class="h4 mb-1">
+        Importar extrato Santander
+    </h1>
+
+    <p class="text-muted mb-0">
+        O sistema tentará conciliar automaticamente movimentos pendentes ou atrasados.
+    </p>
+</div>
+
+<form method="post" enctype="multipart/form-data" class="card card-body shadow-sm border-0" novalidate>
+    {% csrf_token %}
+
+    {{ form|crispy }}
+
+    <div class="alert alert-info">
+        O arquivo deve conter colunas como:
+        <strong>data</strong>, <strong>descricao</strong>, <strong>montante</strong> e <strong>saldo</strong>.
+    </div>
+
+    <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary">
+            Importar e conciliar
+        </button>
+
+        <a href="{% url 'finance_dashboard' %}" class="btn btn-outline-secondary">
+            Cancelar
+        </a>
+    </div>
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-success" style="white-space: pre-line;">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+</form>
+
+{% endblock %}

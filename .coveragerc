@@ -1,0 +1,22 @@
+[run]
+source =
+    accounts
+    companies
+    dashboard
+    finances
+
+omit =
+    */migrations/*
+    */tests/*
+    manage.py
+    */settings.py
+    */wsgi.py
+    */asgi.py
+
+[report]
+show_missing = True
+skip_covered = True
+fail_under = 70
+
+[html]
+directory = htmlcov

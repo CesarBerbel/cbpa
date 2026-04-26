@@ -1,0 +1,262 @@
+{% extends "base/base.html" %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-1">
+            Financeiro
+        </h1>
+
+        <p class="text-muted mb-0">
+            Empresa: {{ company.name }} | Mês selecionado: {{ selected_month|date:"m/Y" }}
+        </p>
+    </div>
+
+    <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">
+        Voltar
+    </a>
+</div>
+<div class="mb-4 d-flex gap-2 flex-wrap">
+    <a href="{% url 'finance_dashboard' %}?month={{ previous_month|date:'Y-m' }}" class="btn btn-outline-secondary">
+        Mês anterior
+    </a>
+
+    <a href="{% url 'finance_dashboard' %}?month={{ current_month|date:'Y-m' }}" class="btn btn-outline-dark">
+        Mês atual
+    </a>
+
+    <a href="{% url 'finance_dashboard' %}?month={{ next_month|date:'Y-m' }}" class="btn btn-outline-secondary">
+        Próximo mês
+    </a>
+</div>
+{% if can_manage_finance %}
+    <div class="mb-4 d-flex gap-2 flex-wrap">
+        <a href="{% url 'bank_create' %}" class="btn btn-outline-primary">
+            Novo banco
+        </a>
+
+        <a href="{% url 'financial_account_create' %}" class="btn btn-outline-primary">
+            Nova conta
+        </a>
+
+        <a href="{% url 'financial_movement_create' %}" class="btn btn-outline-success">
+            Novo movimento
+        </a>
+
+        {% if can_transfer %}
+            <a href="{% url 'financial_transfer_create' %}" class="btn btn-outline-warning">
+                Nova transferência
+            </a>
+        {% else %}
+            <button class="btn btn-outline-warning" disabled>
+                Nova transferência
+            </button>
+        {% endif %}
+
+        <a href="{% url 'bank_statement_import' %}" class="btn btn-outline-dark">
+            <i class="bi bi-upload"></i>
+        </a>
+        <a href="{% url 'bank_import_audit' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-clipboard-data"></i>
+        </a>
+        <a href="{% url 'financial_category_create' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-tags"></i>
+        </a>
+
+        <a href="{% url 'financial_subcategory_create' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-tag"></i>
+        </a>
+    </div>
+{% endif %}
+
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-body">
+        <h2 class="h5 mb-3">
+            Contas e saldos
+        </h2>
+
+        {% if account_summaries %}
+            <div class="table-responsive">
+                <table class="table table-sm align-middle">
+                    <thead>
+                        <tr>
+                            <th>Conta</th>
+                            <th>Titular</th>
+                            <th>Saldo inicial</th>
+                            <th>Saldo corrente</th>
+                            <th>Saldo previsto</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in account_summaries %}
+                            <tr>
+                                <td>
+                                    <a href="{% url 'financial_account_detail' item.account.id %}">
+                                        {{ item.account.name }}
+                                    </a>
+                                </td>
+                                <td>{{ item.account.holder.full_name }}</td>
+                                <td>{{ item.summary.initial_balance }} EUR</td>
+                                <td>{{ item.summary.current_balance }} EUR</td>
+                                <td>{{ item.summary.expected_balance }} EUR</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="text-muted mb-0">
+                Nenhuma conta financeira cadastrada.
+            </p>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card shadow-sm border-0">
+    <div class="card-body">
+        <h2 class="h5 mb-3">
+            Movimentos do mês
+        </h2>
+
+        {% if movements %}
+            <div class="table-responsive">
+                <table class="table table-sm align-middle">
+                    <thead>
+                        <tr>
+                            <th class="fw-semibold">Data</th>
+                            <th class="fw-semibold">Conta</th>
+                            <th class="fw-semibold">Tipo</th>
+                            <th class="fw-semibold">Rec.</th>
+                            <th class="fw-semibold">Descrição</th>
+                            <th class="fw-semibold">Categoria</th>
+                            <th class="fw-semibold">Subcategoria</th>
+                            <th class="fw-semibold text-end">Valor</th>
+                            <th class="fw-semibold text-end">Status</th>
+                            {% if can_manage_finance %}
+                                <th class="fw-semibold text-end">Ações</th>
+                            {% endif %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for movement in movements %}
+                    <tr>
+
+                        <!-- DATA -->
+                        <td>
+                            {% if movement.paid_at %}
+                                <i class="bi bi-check-circle text-success"></i>
+                                {{ movement.paid_at|date:"d/m/y" }}
+                            {% else %}
+                                <i class="bi bi-calendar-event text-secondary"></i>
+                                {{ movement.due_date|date:"d/m/y" }}
+                            {% endif %}
+                        </td>
+
+                        <!-- CONTA -->
+                        <td>
+                            {{ movement.account.name }}
+                        </td>
+
+                        <!-- TIPO -->
+                        <td class="text-center">
+                            {% if movement.movement_type == "INCOME" %}
+                                <i class="bi bi-arrow-down-circle text-success" title="Entrada"></i>
+                            {% else %}
+                                <i class="bi bi-arrow-up-circle text-danger" title="Saída"></i>
+                            {% endif %}
+                        </td>
+
+                        <!-- RECORRÊNCIA -->
+                        <td>
+                            {% if movement.recurrence_type == "SINGLE" %}
+                                <i class="bi bi-dot"></i>
+                            {% elif movement.recurrence_type == "INSTALLMENT" %}
+                                <i class="bi bi-list-ol"></i>
+                            {% elif movement.recurrence_type == "FIXED" %}
+                                <i class="bi bi-arrow-repeat"></i>
+                            {% endif %}
+                        </td>
+
+                        <!-- DESCRIÇÃO -->
+                        <td>
+                            {{ movement.description|default:"-" }}
+                        </td>
+
+                        
+                        <!-- CATEGORIA -->
+                         <td>
+                            {% if movement.category %}
+                                {{ movement.category.name }}
+                            {% else %}
+                                Sem categoria
+                            {% endif %}
+                        </td>
+
+                        <!-- SUBCATEGORIA -->
+                        <td>
+                            {% if movement.subcategory %}
+                                {{ movement.subcategory.name }}
+                            {% else %}
+                                Sem subcategoria
+                            {% endif %}
+                        </td>
+
+                        <!-- VALOR -->
+                        <td class="text-end">
+                            {% if movement.movement_type == "INCOME" %}
+                                <span class="text-success fw-bold">
+                                    + {{ movement.amount }} €
+                                </span>
+                            {% else %}
+                                <span class="text-danger fw-bold">
+                                    - {{ movement.amount }} €
+                                </span>
+                            {% endif %}
+                        </td>
+
+                        <!-- STATUS -->
+                        <td class="text-end">
+                            {% if movement.status == "PAID" %}
+                                <span class="badge bg-success">
+                                    <i class="bi bi-check-lg"></i>
+                                </span>
+                            {% elif movement.status == "PENDING" %}
+                                <span class="badge bg-warning text-dark">
+                                    <i class="bi bi-clock"></i>
+                                </span>
+                            {% else %}
+                                <span class="badge bg-danger">
+                                    <i class="bi bi-exclamation-triangle"></i>
+                                </span>
+                            {% endif %}
+                        </td>
+
+                        <!-- AÇÕES -->
+                        {% if can_manage_finance %}
+                        <td class="text-end">
+                            {% if movement.status != "PAID" %}
+                                <a href="{% url 'mark_movement_as_paid' movement.id %}"
+                                class="btn btn-sm btn-success">
+                                    <i class="bi bi-check-circle"></i>
+                                </a>
+                            {% else %}
+                                <i class="bi bi-check2-all text-success"></i>
+                            {% endif %}
+                        </td>
+                        {% endif %}
+
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="text-muted mb-0">
+                Nenhum movimento neste mês.
+            </p>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}
