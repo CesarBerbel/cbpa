@@ -8,7 +8,6 @@ from django.utils import timezone
 from companies.models import Company
 from finances.models import Bank, FinancialAccount, FinancialMovement, FinancialTransfer
 from finances.services import (
-    build_statement_reference,
     calculate_account_month_summary,
     create_installment_movements,
     create_single_movement,
@@ -321,8 +320,10 @@ class FinanceServiceTestCase(TestCase):
         content = "\n".join(
             [
                 "0100018    000003EUR  00066248782020  20250805  20250805",
-                "0300018    000003EUR  00066248782020  20250805  20250805COMISS„O DE GEST„O                       00000000    +000000000000000000 -000000000000001590 000000000000000",
-                "0300018 4TF000003EUR  000662487820200920250805  20250805TRANSF CESAR BERBEL LEME DE AL           00000000    +000000000000000000 +000000000000004225 000000000000000",
+                "0300018    000003EUR  00066248782020  20250805  20250805COMISS„O DE GEST„O                       "
+                " 00000000    +000000000000000000 -000000000000001590 000000000000000",
+                "0300018 4TF000003EUR  000662487820200920250805  20250805TRANSF CESAR BERBEL LEME DE AL           "
+                "00000000    +000000000000000000 +000000000000004225 000000000000000",
                 "0700018    000003EUR  00066248782020  20260427  20260427",
             ]
         )
@@ -339,8 +340,10 @@ class FinanceServiceTestCase(TestCase):
         """
         content = "\n".join(
             [
-                "0300018    000003EUR  00066248782020  20250805  20250805COMISS„O DE GEST„O                       00000000    +000000000000000000 -000000000000001590 000000000000000",
-                "0300018 4TF000003EUR  000662487820200920250805  20250805TRANSF CESAR BERBEL LEME DE AL           00000000    +000000000000000000 +000000000000004225 000000000000000",
+                "0300018    000003EUR  00066248782020  20250805  20250805COMISS„O DE GEST„O                       "
+                "00000000    +000000000000000000 -000000000000001590 000000000000000",
+                "0300018 4TF000003EUR  000662487820200920250805  20250805TRANSF CESAR BERBEL LEME DE AL           "
+                "00000000    +000000000000000000 +000000000000004225 000000000000000",
             ]
         )
 

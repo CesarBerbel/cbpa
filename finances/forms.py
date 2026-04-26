@@ -202,7 +202,6 @@ class FinancialMovementForm(forms.Form):
         recurrence_type = cleaned_data.get("recurrence_type")
         installments = cleaned_data.get("installments")
         amount_mode = cleaned_data.get("amount_mode")
-        fixed_months = cleaned_data.get("fixed_months")
         category = cleaned_data.get("category")
         subcategory = cleaned_data.get("subcategory")
         movement_type = cleaned_data.get("movement_type")

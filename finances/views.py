@@ -2,7 +2,6 @@ import uuid
 from datetime import date
 from dateutil.relativedelta import relativedelta
 
-from django.views.decorators.http import require_POST
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render, get_object_or_404
@@ -19,13 +18,13 @@ from finances.forms import (
     MarkMovementAsPaidForm,
 )
 from finances.models import (
-    Bank,
     BankStatementImport,
     FinancialAccount,
     FinancialMovement,
 )
 from finances.services import (
     calculate_account_month_summary,
+    create_fixed_movement_template,
     create_installment_movements,
     create_single_movement,
     create_transfer,
@@ -512,13 +511,15 @@ def financial_account_movement_create_view(request, account_id):
                 )
 
             elif recurrence_type == FinancialMovement.RecurrenceType.FIXED:
-                create_fixed_movements(
+                create_fixed_movement_template(
                     company=company,
                     account=form.cleaned_data["account"],
                     movement_type=form.cleaned_data["movement_type"],
                     amount=form.cleaned_data["amount"],
                     due_date=form.cleaned_data["due_date"],
                     description=form.cleaned_data["description"],
+                    category=form.cleaned_data.get("category"),
+                    subcategory=form.cleaned_data.get("subcategory"),
                 )
 
             messages.success(request, "Movimento financeiro criado com sucesso.")

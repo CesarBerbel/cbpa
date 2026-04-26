@@ -1,6 +1,4 @@
-import csv
 import hashlib
-import io
 import re
 import uuid
 from calendar import monthrange
@@ -371,7 +369,7 @@ def parse_santander_positional_line(line):
                 int(match.group()[6:8]),
             )
             dates.append((d, match.end()))
-        except:
+        except ValueError:
             continue
 
     if not dates:

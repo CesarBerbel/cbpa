@@ -1,4 +1,4 @@
-from companies.models import Company, CompanyMembership
+from companies.models import CompanyMembership
 
 
 def get_user_company(user):
