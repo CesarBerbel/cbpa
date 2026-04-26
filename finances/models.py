@@ -36,7 +36,18 @@ class Bank(models.Model):
     class Meta:
         verbose_name = "Banco"
         verbose_name_plural = "Bancos"
-        ordering = ["name"]
+        ordering = [
+            "name",
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=[
+                    "company",
+                    "name",
+                ],
+                name="unique_bank_name_per_company",
+            ),
+        ]
 
     def __str__(self):
         return self.name
