@@ -546,11 +546,27 @@ def import_santander_portugal_consolidated_statement(company, account, file_cont
             t["line_number"],
         )
 
-        if FinancialMovement.objects.filter(external_reference=ref).exists():
+        if FinancialMovement.objects.filter(
+            company=company,
+            account=account,
+            external_reference=ref,
+        ).exists():
             skipped += 1
+
+            BankStatementImport.objects.create(
+                company=company,
+                account=account,
+                date=t["date"],
+                description=t["description"],
+                amount=amount,
+                external_reference=ref,
+                status=BankStatementImport.ImportStatus.DUPLICATED,
+                raw_line=t.get("raw_line", ""),
+            )
+
             continue
 
-        FinancialMovement.objects.create(
+        movement = FinancialMovement.objects.create(
             company=company,
             account=account,
             movement_type=movement_type,
@@ -561,7 +577,20 @@ def import_santander_portugal_consolidated_statement(company, account, file_cont
             paid_at=t["date"],
             status=FinancialMovement.MovementStatus.PAID,
             is_imported=True,
+            is_reconciled=True,
             external_reference=ref,
+        )
+
+        BankStatementImport.objects.create(
+            company=company,
+            account=account,
+            movement=movement,
+            date=t["date"],
+            description=t["description"],
+            amount=amount,
+            external_reference=ref,
+            status=BankStatementImport.ImportStatus.IMPORTED,
+            raw_line=t.get("raw_line", ""),
         )
 
         imported += 1
