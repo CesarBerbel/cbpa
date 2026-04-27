@@ -2,11 +2,16 @@ from django.contrib import admin
 
 from finances.models import (
     Bank,
+    BankStatementImport,
     FinancialAccount,
     FinancialMovement,
     FinancialTransfer,
     FinancialCategory,
     FinancialSubcategory,
+    CreditCard,
+    CreditCardExpense,
+    CreditCardInvoice,
+    CreditCardInstallment,
 )
 
 
@@ -160,3 +165,101 @@ class FinancialSubcategoryAdmin(admin.ModelAdmin):
         "category__name",
         "company__name",
     ]
+
+# =========================================
+# CREDIT CARD
+# =========================================
+
+@admin.register(CreditCard)
+class CreditCardAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "company",
+        "payment_account",
+        "brand",
+        "last_digits",
+        "limit",
+        "closing_day",
+        "due_day",
+        "is_active",
+    )
+    list_filter = ("company", "brand", "is_active")
+    search_fields = ("last_digits", "payment_account__bank__name")
+
+
+# =========================================
+# CREDIT CARD EXPENSE
+# =========================================
+
+@admin.register(CreditCardExpense)
+class CreditCardExpenseAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "card",
+        "description",
+        "purchase_date",
+        "total_amount",
+        "installments",
+        "category",
+        "subcategory",
+        "is_deleted",
+    )
+    list_filter = ("card", "category", "subcategory", "is_deleted")
+    search_fields = ("description",)
+    date_hierarchy = "purchase_date"
+
+
+# =========================================
+# INSTALLMENT INLINE
+# =========================================
+
+class CreditCardInstallmentInline(admin.TabularInline):
+    model = CreditCardInstallment
+    extra = 0
+    readonly_fields = (
+        "expense",
+        "installment_number",
+        "installment_total",
+        "amount",
+        "category",
+        "subcategory",
+    )
+
+
+# =========================================
+# CREDIT CARD INVOICE
+# =========================================
+
+@admin.register(CreditCardInvoice)
+class CreditCardInvoiceAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "card",
+        "reference_month",
+        "closing_date",
+        "due_date",
+        "total_amount",
+        "status",
+    )
+    list_filter = ("card", "status")
+    date_hierarchy = "reference_month" 
+    inlines = [CreditCardInstallmentInline]
+
+# =========================================
+# IMPORT AUDIT
+# =========================================
+
+@admin.register(BankStatementImport)
+class BankStatementImportAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "company",
+        "account",
+        "date",
+        "amount",
+        "status",
+        "suggested_category",
+        "categorization_source",
+    )
+    list_filter = ("status", "company")
+    search_fields = ("description",)

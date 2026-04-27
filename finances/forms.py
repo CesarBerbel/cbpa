@@ -10,6 +10,8 @@ from finances.models import (
     FinancialCategory,
     FinancialMovement,
     FinancialSubcategory,
+    CreditCard, 
+    CreditCardExpense,
 )
 
 
@@ -393,3 +395,93 @@ class FinancialSubcategoryForm(forms.ModelForm):
                 company=company,
                 is_active=True,
             )
+
+class CreditCardForm(forms.ModelForm):
+    """
+    Form used to create credit cards.
+    """
+
+    class Meta:
+        model = CreditCard
+        fields = [
+            "payment_account",
+            "brand",
+            "last_digits",
+            "limit",
+            "closing_day",
+            "due_day",
+        ]
+
+    def __init__(self, *args, company=None, **kwargs):
+        """
+        Filter payment accounts by company.
+        """
+        super().__init__(*args, **kwargs)
+
+        if company:
+            self.fields["payment_account"].queryset = FinancialAccount.objects.filter(
+                company=company,
+                is_active=True,
+            )
+
+
+class CreditCardExpenseForm(forms.ModelForm):
+    """
+    Form used to create credit card expenses.
+    """
+
+    class Meta:
+        model = CreditCardExpense
+        fields = [
+            "description",
+            "purchase_date",
+            "total_amount",
+            "installments",
+            "category",
+            "subcategory",
+        ]
+        widgets = {
+            "purchase_date": forms.DateInput(
+                attrs={
+                    "type": "date",
+                }
+            ),
+        }
+
+    def __init__(self, *args, company=None, **kwargs):
+        """
+        Filter categories by company.
+        """
+        super().__init__(*args, **kwargs)
+
+        if company:
+            self.fields["category"].queryset = FinancialCategory.objects.filter(
+                company=company,
+                movement_type=FinancialMovement.MovementType.EXPENSE,
+                is_active=True,
+            )
+
+            self.fields["subcategory"].queryset = FinancialSubcategory.objects.filter(
+                company=company,
+                is_active=True,
+            )
+
+    def clean(self):
+        """
+        Validate category and subcategory.
+        """
+        cleaned_data = super().clean()
+
+        category = cleaned_data.get("category")
+        subcategory = cleaned_data.get("subcategory")
+        installments = cleaned_data.get("installments")
+
+        if installments and installments < 1:
+            raise forms.ValidationError("O número de parcelas deve ser maior que zero.")
+
+        if subcategory and category and subcategory.category != category:
+            raise forms.ValidationError(
+                "A subcategoria selecionada não pertence à categoria escolhida."
+            )
+
+        return cleaned_data

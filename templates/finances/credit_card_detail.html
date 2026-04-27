@@ -1,0 +1,145 @@
+{% extends "base/base.html" %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h4 mb-1">{{ card }}</h1>
+        <p class="text-muted mb-0">
+            Conta de pagamento: {{ card.payment_account.name }} |
+            Limite: {{ card.limit }} EUR |
+            Fecho: dia {{ card.closing_day }} |
+            Vencimento: dia {{ card.due_day }}
+        </p>
+    </div>
+
+    <a href="{% url 'finance_dashboard' %}" class="btn btn-outline-secondary">
+        Voltar
+    </a>
+</div>
+
+<div class="mb-4 d-flex gap-2 flex-wrap">
+    <a href="{% url 'credit_card_detail' card.id %}?month={{ previous_month|date:'Y-m' }}" class="btn btn-outline-secondary">
+        Mês anterior
+    </a>
+
+    <a href="{% url 'credit_card_detail' card.id %}?month={{ current_month|date:'Y-m' }}" class="btn btn-outline-dark">
+        Mês atual
+    </a>
+
+    <a href="{% url 'credit_card_detail' card.id %}?month={{ next_month|date:'Y-m' }}" class="btn btn-outline-secondary">
+        Próximo mês
+    </a>
+
+    {% if can_manage_finance %}
+        <a href="{% url 'credit_card_expense_create' card.id %}" class="btn btn-success">
+            Novo gasto
+        </a>
+    {% endif %}
+</div>
+
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-body">
+        <h2 class="h5 mb-3">Faturas de {{ selected_month|date:"m/Y" }}</h2>
+
+        {% if invoices %}
+            <table class="table table-sm align-middle">
+                <thead>
+                    <tr>
+                        <th class="fw-semibold">Referência</th>
+                        <th class="fw-semibold">Fecho</th>
+                        <th class="fw-semibold">Vencimento</th>
+                        <th class="fw-semibold text-end">Total</th>
+                        <th class="fw-semibold text-center">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for invoice in invoices %}
+                        <tr>
+                            <td>{{ invoice.reference_month|date:"m/Y" }}</td>
+                            <td>{{ invoice.closing_date|date:"d/m/y" }}</td>
+                            <td>{{ invoice.due_date|date:"d/m/y" }}</td>
+                            <td class="text-end">{{ invoice.total_amount }} EUR</td>
+                            <td class="text-center">{{ invoice.get_status_display }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p class="text-muted mb-0">Nenhuma fatura neste mês.</p>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-body">
+        <h2 class="h5 mb-3">Resumo por categoria</h2>
+
+        {% if category_summary %}
+            <table class="table table-sm align-middle">
+                <thead>
+                    <tr>
+                        <th class="fw-semibold">Categoria</th>
+                        <th class="fw-semibold">Subcategoria</th>
+                        <th class="fw-semibold text-end">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in category_summary %}
+                        <tr>
+                            <td>{{ item.category__name|default:"-" }}</td>
+                            <td>{{ item.subcategory__name|default:"-" }}</td>
+                            <td class="text-end">{{ item.total }} EUR</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p class="text-muted mb-0">Nenhum gasto categorizado neste mês.</p>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card shadow-sm border-0">
+    <div class="card-body">
+        <h2 class="h5 mb-3">Gastos lançados</h2>
+
+        {% if expenses %}
+            <table class="table table-sm align-middle">
+                <thead>
+                    <tr>
+                        <th class="fw-semibold">Data</th>
+                        <th class="fw-semibold">Descrição</th>
+                        <th class="fw-semibold">Parcelas</th>
+                        <th class="fw-semibold text-end">Total</th>
+                        {% if can_manage_finance %}
+                            <th class="fw-semibold text-end">Ações</th>
+                        {% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for expense in expenses %}
+                        <tr>
+                            <td>{{ expense.purchase_date|date:"d/m/y" }}</td>
+                            <td>{{ expense.description }}</td>
+                            <td>{{ expense.installments }}</td>
+                            <td class="text-end">{{ expense.total_amount }} EUR</td>
+
+                            {% if can_manage_finance %}
+                                <td class="text-end">
+                                    <a href="{% url 'credit_card_expense_delete' expense.id %}" class="btn btn-sm btn-outline-danger">
+                                        Excluir
+                                    </a>
+                                </td>
+                            {% endif %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p class="text-muted mb-0">Nenhum gasto lançado.</p>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}

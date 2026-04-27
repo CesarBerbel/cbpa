@@ -67,6 +67,9 @@
         <a href="{% url 'financial_subcategory_create' %}" class="btn btn-outline-secondary">
             <i class="bi bi-tag"></i>
         </a>
+        <a href="{% url 'credit_card_create' %}" class="btn btn-outline-secondary">
+            Novo cartão
+        </a>
     </div>
 {% endif %}
 
@@ -93,7 +96,7 @@
                             <tr>
                                 <td>
                                     <a href="{% url 'financial_account_detail' item.account.id %}">
-                                        {{ item.account.name }}
+                                        {{ item.account.bank.name }}
                                     </a>
                                 </td>
                                 <td>{{ item.account.holder.full_name }}</td>
@@ -109,6 +112,24 @@
             <p class="text-muted mb-0">
                 Nenhuma conta financeira cadastrada.
             </p>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-body">
+        <h2 class="h5 mb-3">Cartões vinculados</h2>
+
+        {% if credit_cards %}
+            <div class="d-flex gap-2 flex-wrap">
+                {% for card in credit_cards %}
+                    <a href="{% url 'credit_card_detail' card.id %}" class="btn btn-outline-secondary">
+                        {{ card }}
+                    </a>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="text-muted mb-0">Nenhum cartão vinculado.</p>
         {% endif %}
     </div>
 </div>
@@ -189,7 +210,7 @@
                             {% if movement.category %}
                                 {{ movement.category.name }}
                             {% else %}
-                                Sem categoria
+                                -
                             {% endif %}
                         </td>
 
@@ -198,7 +219,7 @@
                             {% if movement.subcategory %}
                                 {{ movement.subcategory.name }}
                             {% else %}
-                                Sem subcategoria
+                                -
                             {% endif %}
                         </td>
 

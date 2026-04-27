@@ -13,6 +13,10 @@ from finances.views import (
     bank_statement_import_view,
     financial_category_create_view,
     financial_subcategory_create_view,
+    credit_card_create_view,
+    credit_card_detail_view,
+    credit_card_expense_create_view,
+    credit_card_expense_delete_view,
 )
 
 urlpatterns = [
@@ -67,5 +71,23 @@ urlpatterns = [
         "financeiro/subcategorias/nova/",
         financial_subcategory_create_view,
         name="financial_subcategory_create",
+    ),
+    path("financeiro/cartoes/novo/", 
+         credit_card_create_view, 
+         name="credit_card_create"
+    ),
+    path("financeiro/cartoes/<int:card_id>/", 
+         credit_card_detail_view, 
+         name="credit_card_detail"
+    ),
+    path(
+        "financeiro/cartoes/<int:card_id>/gastos/novo/",
+        credit_card_expense_create_view,
+        name="credit_card_expense_create",
+    ),    
+    path(
+        "financeiro/cartoes/gastos/<int:expense_id>/excluir/",
+        credit_card_expense_delete_view,
+        name="credit_card_expense_delete",
     ),
 ]

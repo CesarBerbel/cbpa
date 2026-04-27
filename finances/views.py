@@ -6,6 +6,16 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render, get_object_or_404
 
+from finances.forms import CreditCardForm, CreditCardExpenseForm
+from finances.models import CreditCard, CreditCardExpense
+from finances.credit_card_services import (
+    create_credit_card_expense,
+    delete_credit_card_expense,
+    ensure_credit_card_invoices_for_month,
+    get_credit_card_category_summary,
+    sync_paid_invoice_from_movement,
+)
+
 from companies.services import get_user_company, user_is_company_owner
 from finances.forms import (
     BankForm,
@@ -117,6 +127,8 @@ def finance_dashboard_view(request):
         company=company,
     )
 
+    credit_cards = CreditCard.objects.filter(company=company, is_active=True).select_related("payment_account")
+
     return render(
         request,
         "finances/finance_dashboard.html",
@@ -133,6 +145,7 @@ def finance_dashboard_view(request):
             "previous_month": previous_month,
             "next_month": next_month,
             "current_month": current_month,
+            "credit_cards": credit_cards,
         },
     )
 
@@ -367,6 +380,8 @@ def mark_movement_as_paid_view(request, movement_id):
                 payment_comment=form.cleaned_data["payment_comment"],
             )
 
+            sync_paid_invoice_from_movement(movement)
+
             messages.success(request, "Movimento marcado como efetuado com sucesso.")
 
             return redirect("finance_dashboard")
@@ -434,6 +449,8 @@ def financial_account_detail_view(request, account_id):
         company=company,
     )
 
+    credit_cards = CreditCard.objects.filter(payment_account=account, is_active=True)
+
     return render(
         request,
         "finances/financial_account_detail.html",
@@ -447,6 +464,7 @@ def financial_account_detail_view(request, account_id):
             "next_month": next_month,
             "current_month": current_month,
             "can_manage_finance": can_manage_finance,
+            "credit_cards": credit_cards,
         },
     )
 
@@ -689,5 +707,201 @@ def financial_subcategory_create_view(request):
         "finances/financial_subcategory_form.html",
         {
             "form": form,
+        },
+    )
+
+
+@login_required
+def credit_card_create_view(request):
+    """
+    Create a credit card linked to a payment account.
+    """
+    company = get_user_company(request.user)
+
+    if not user_is_company_owner(request.user, company):
+        messages.error(request, "Você não tem permissão para criar cartões.")
+        return redirect("finance_dashboard")
+
+    if request.method == "POST":
+        form = CreditCardForm(
+            request.POST,
+            company=company,
+        )
+
+        if form.is_valid():
+            card = form.save(commit=False)
+            card.company = company
+            card.save()
+
+            messages.success(request, "Cartão criado com sucesso.")
+            return redirect("credit_card_detail", card_id=card.id)
+    else:
+        form = CreditCardForm(
+            company=company,
+        )
+
+    return render(
+        request,
+        "finances/credit_card_form.html",
+        {
+            "form": form,
+        },
+    )
+
+
+@login_required
+def credit_card_detail_view(request, card_id):
+    """
+    Show credit card detail page.
+    """
+    company = get_user_company(request.user)
+
+    card = get_object_or_404(
+        CreditCard.objects.select_related(
+            "payment_account",
+            "payment_account__bank",
+        ),
+        id=card_id,
+        company=company,
+    )
+
+    year, month = parse_month_parameter(request)
+
+    ensure_credit_card_invoices_for_month(
+        company=company,
+        year=year,
+        month=month,
+    )
+
+    selected_month = date(year, month, 1)
+    previous_month = selected_month - relativedelta(months=1)
+    next_month = selected_month + relativedelta(months=1)
+    current_month = date.today().replace(day=1)
+
+    invoices = card.invoices.filter(
+        reference_month__year=year,
+        reference_month__month=month,
+    ).prefetch_related(
+        "installments",
+        "installments__expense",
+    )
+
+    expenses = card.expenses.filter(
+        is_deleted=False,
+    )
+
+    category_summary = get_credit_card_category_summary(
+        card=card,
+        year=year,
+        month=month,
+    )
+
+    can_manage_finance = user_is_company_owner(
+        user=request.user,
+        company=company,
+    )
+
+    return render(
+        request,
+        "finances/credit_card_detail.html",
+        {
+            "card": card,
+            "invoices": invoices,
+            "expenses": expenses,
+            "category_summary": category_summary,
+            "selected_month": selected_month,
+            "previous_month": previous_month,
+            "next_month": next_month,
+            "current_month": current_month,
+            "can_manage_finance": can_manage_finance,
+        },
+    )
+
+
+@login_required
+def credit_card_expense_create_view(request, card_id):
+    """
+    Create credit card expense.
+    """
+    company = get_user_company(request.user)
+
+    if not user_is_company_owner(request.user, company):
+        messages.error(request, "Você não tem permissão para lançar gastos.")
+        return redirect("credit_card_detail", card_id=card_id)
+
+    card = get_object_or_404(
+        CreditCard,
+        id=card_id,
+        company=company,
+        is_active=True,
+    )
+
+    if request.method == "POST":
+        form = CreditCardExpenseForm(
+            request.POST,
+            company=company,
+        )
+
+        if form.is_valid():
+            create_credit_card_expense(
+                card=card,
+                description=form.cleaned_data["description"],
+                purchase_date=form.cleaned_data["purchase_date"],
+                total_amount=form.cleaned_data["total_amount"],
+                installments=form.cleaned_data["installments"],
+                category=form.cleaned_data.get("category"),
+                subcategory=form.cleaned_data.get("subcategory"),
+            )
+
+            messages.success(request, "Gasto lançado com sucesso.")
+            return redirect("credit_card_detail", card_id=card.id)
+    else:
+        form = CreditCardExpenseForm(
+            company=company,
+        )
+
+    return render(
+        request,
+        "finances/credit_card_expense_form.html",
+        {
+            "form": form,
+            "card": card,
+        },
+    )
+
+
+@login_required
+def credit_card_expense_delete_view(request, expense_id):
+    """
+    Delete credit card expense while invoice is not paid.
+    """
+    company = get_user_company(request.user)
+
+    expense = get_object_or_404(
+        CreditCardExpense.objects.select_related(
+            "card",
+        ),
+        id=expense_id,
+        card__company=company,
+    )
+
+    if not user_is_company_owner(request.user, company):
+        messages.error(request, "Você não tem permissão para excluir gastos.")
+        return redirect("credit_card_detail", card_id=expense.card.id)
+
+    if request.method == "POST":
+        try:
+            delete_credit_card_expense(expense)
+            messages.success(request, "Gasto excluído com sucesso.")
+        except ValueError as error:
+            messages.error(request, str(error))
+
+        return redirect("credit_card_detail", card_id=expense.card.id)
+
+    return render(
+        request,
+        "finances/credit_card_expense_confirm_delete.html",
+        {
+            "expense": expense,
         },
     )

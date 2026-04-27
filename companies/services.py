@@ -1,4 +1,5 @@
 from companies.models import CompanyMembership
+from finances.ai_categorization import suggest_category_for_transaction
 
 
 def get_user_company(user):

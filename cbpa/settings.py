@@ -1,4 +1,5 @@
 from pathlib import Path
+import os
 
 # Base directory of the project
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -110,3 +111,15 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # Crispy Forms with Bootstrap 5
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"
+
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+
+OPENAI_TRANSACTION_CATEGORY_MODEL = os.getenv(
+    "OPENAI_TRANSACTION_CATEGORY_MODEL",
+    "gpt-4o-mini",
+)
+
+ENABLE_AI_CATEGORY_SUGGESTIONS = os.getenv(
+    "ENABLE_AI_CATEGORY_SUGGESTIONS",
+    "False",
+) == "True"

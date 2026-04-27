@@ -9,6 +9,7 @@ from dateutil.relativedelta import relativedelta
 from django.db import models, transaction
 from django.utils import timezone
 
+from finances.ai_categorization import suggest_category_for_transaction
 from finances.models import (
     FinancialMovement,
     FinancialTransfer,
@@ -521,91 +522,306 @@ def ensure_fixed_movements_for_month(company, year, month):
     return created_movements
 
 
+def parse_csv_statement(content):
+    """
+    Parse CSV statement with expected columns:
+    data, descricao, montante, saldo.
+    """
+    csv_file = io.StringIO(content)
+    reader = csv.DictReader(csv_file, delimiter=";")
+
+    transactions = []
+    total = 0
+    invalid = 0
+
+    if not reader.fieldnames:
+        return {
+            "transactions": transactions,
+            "total_lines": total,
+            "invalid_lines": invalid,
+        }
+
+    reader.fieldnames = [
+        field.strip().lower()
+        for field in reader.fieldnames
+    ]
+
+    for line_number, row in enumerate(reader, start=2):
+        total += 1
+
+        raw_date = row.get("data")
+        raw_description = row.get("descricao") or row.get("descrição") or ""
+        raw_amount = row.get("montante")
+
+        if not raw_date or not raw_amount:
+            invalid += 1
+            continue
+
+        try:
+            day, month, year = raw_date.strip().split("/")
+
+            movement_date = date(
+                int(year),
+                int(month),
+                int(day),
+            )
+
+            amount = Decimal(
+                raw_amount.strip().replace(".", "").replace(",", ".")
+            )
+        except (ValueError, TypeError):
+            invalid += 1
+            continue
+
+        transactions.append(
+            {
+                "date": movement_date,
+                "description": raw_description.strip(),
+                "amount": amount,
+                "line_number": line_number,
+                "raw_line": str(row),
+            }
+        )
+
+    return {
+        "transactions": transactions,
+        "total_lines": total,
+        "invalid_lines": invalid,
+    }
+
+
+def parse_bank_statement(content):
+    """
+    Parse supported bank statement formats.
+    """
+    stripped_content = content.lstrip()
+
+    if stripped_content.startswith("010") or stripped_content.startswith("030"):
+        return parse_santander_positional_statement(content)
+
+    return parse_csv_statement(content)
+
+
 # =========================================
 # IMPORT MAIN
 # =========================================
 
+def find_matching_manual_movement(company, account, movement_type, amount, movement_date):
+    """
+    Find a compatible pending or overdue manual movement for bank reconciliation.
+    """
+    return (
+        FinancialMovement.objects
+        .filter(
+            company=company,
+            account=account,
+            movement_type=movement_type,
+            amount=amount,
+            status__in=[
+                FinancialMovement.MovementStatus.PENDING,
+                FinancialMovement.MovementStatus.OVERDUE,
+            ],
+            is_imported=False,
+            paid_at__isnull=True,
+            due_date__lte=movement_date,
+        )
+        .order_by(
+            "-due_date",
+            "-id",
+        )
+        .first()
+    )
 
 @transaction.atomic
 def import_santander_portugal_consolidated_statement(company, account, file_content):
-    decoded = decode_file_content(file_content)
+    """
+    Import Santander Portugal consolidated statement.
 
-    parsed = parse_santander_positional_statement(decoded)
+    This function:
+    - parses Santander TXT or supported CSV files;
+    - detects income or expense using the signed amount;
+    - prevents duplicated imported movements;
+    - tries to match pending/overdue manual movements;
+    - suggests category/subcategory using local rules or AI;
+    - saves categorization suggestion into the movement and audit row;
+    - never blocks the import if categorization fails.
+    """
+    decoded_content = decode_file_content(file_content)
+
+    parsed = parse_bank_statement(decoded_content) or {
+        "transactions": [],
+        "total_lines": 0,
+        "invalid_lines": 0,
+    }
 
     transactions = parsed["transactions"]
+    total_lines = parsed["total_lines"]
+    invalid_lines = parsed["invalid_lines"]
 
     imported = 0
+    matched = 0
     skipped = 0
 
-    for t in transactions:
-        amount = t["amount"]
-        movement_type = (
-            FinancialMovement.MovementType.INCOME
-            if amount >= 0
-            else FinancialMovement.MovementType.EXPENSE
+    for transaction in transactions:
+        movement_date = transaction["date"]
+        description = transaction["description"]
+        signed_amount = transaction["amount"]
+
+        if signed_amount >= 0:
+            movement_type = FinancialMovement.MovementType.INCOME
+        else:
+            movement_type = FinancialMovement.MovementType.EXPENSE
+
+        movement_amount = abs(signed_amount)
+
+        line_number = transaction.get("line_number", 0)
+        raw_line = transaction.get("raw_line", "")
+
+        external_reference = build_statement_reference(
+            account=account,
+            movement_date=movement_date,
+            description=description,
+            amount=signed_amount,
+            line_number=line_number,
         )
 
-        ref = build_statement_reference(
-            account,
-            t["date"],
-            t["description"],
-            amount,
-            t["line_number"],
+        suggestion = suggest_category_for_transaction(
+            company=company,
+            description=description,
+            movement_type=movement_type,
+            amount=movement_amount,
         )
 
-        if FinancialMovement.objects.filter(
+        suggested_category = suggestion.category if suggestion else None
+        suggested_subcategory = suggestion.subcategory if suggestion else None
+        categorization_confidence = suggestion.confidence if suggestion else None
+        categorization_source = suggestion.source if suggestion else ""
+        categorization_reason = suggestion.reason if suggestion else ""
+
+        already_exists = FinancialMovement.objects.filter(
             company=company,
             account=account,
-            external_reference=ref,
-        ).exists():
+            external_reference=external_reference,
+        ).exists()
+
+        if already_exists:
             skipped += 1
 
             BankStatementImport.objects.create(
                 company=company,
                 account=account,
-                date=t["date"],
-                description=t["description"],
-                amount=amount,
-                external_reference=ref,
+                date=movement_date,
+                description=description,
+                amount=signed_amount,
+                external_reference=external_reference,
                 status=BankStatementImport.ImportStatus.DUPLICATED,
-                raw_line=t.get("raw_line", ""),
+                raw_line=raw_line,
+                suggested_category=suggested_category,
+                suggested_subcategory=suggested_subcategory,
+                categorization_confidence=categorization_confidence,
+                categorization_source=categorization_source,
+                categorization_reason=categorization_reason,
             )
 
+            continue
+
+        matched_movement = find_matching_manual_movement(
+            company=company,
+            account=account,
+            movement_type=movement_type,
+            amount=movement_amount,
+            movement_date=movement_date,
+        )
+
+        if matched_movement:
+            matched_movement.status = FinancialMovement.MovementStatus.PAID
+            matched_movement.paid_at = movement_date
+            matched_movement.payment_comment = (
+                "Conciliado automaticamente por importação Santander."
+            )
+            matched_movement.external_reference = external_reference
+            matched_movement.is_reconciled = True
+
+            if suggested_category and not matched_movement.category:
+                matched_movement.category = suggested_category
+
+            if suggested_subcategory and not matched_movement.subcategory:
+                matched_movement.subcategory = suggested_subcategory
+
+            matched_movement.save(
+                update_fields=[
+                    "status",
+                    "paid_at",
+                    "payment_comment",
+                    "external_reference",
+                    "is_reconciled",
+                    "category",
+                    "subcategory",
+                    "updated_at",
+                ]
+            )
+
+            BankStatementImport.objects.create(
+                company=company,
+                account=account,
+                movement=matched_movement,
+                date=movement_date,
+                description=description,
+                amount=signed_amount,
+                external_reference=external_reference,
+                status=BankStatementImport.ImportStatus.MATCHED,
+                raw_line=raw_line,
+                suggested_category=suggested_category,
+                suggested_subcategory=suggested_subcategory,
+                categorization_confidence=categorization_confidence,
+                categorization_source=categorization_source,
+                categorization_reason=categorization_reason,
+            )
+
+            matched += 1
             continue
 
         movement = FinancialMovement.objects.create(
             company=company,
             account=account,
             movement_type=movement_type,
+            category=suggested_category,
+            subcategory=suggested_subcategory,
             recurrence_type=FinancialMovement.RecurrenceType.SINGLE,
-            description=t["description"],
-            amount=abs(amount),
-            due_date=t["date"],
-            paid_at=t["date"],
+            description=description,
+            amount=movement_amount,
+            due_date=movement_date,
+            paid_at=movement_date,
             status=FinancialMovement.MovementStatus.PAID,
             is_imported=True,
             is_reconciled=True,
-            external_reference=ref,
+            external_reference=external_reference,
         )
 
         BankStatementImport.objects.create(
             company=company,
             account=account,
             movement=movement,
-            date=t["date"],
-            description=t["description"],
-            amount=amount,
-            external_reference=ref,
+            date=movement_date,
+            description=description,
+            amount=signed_amount,
+            external_reference=external_reference,
             status=BankStatementImport.ImportStatus.IMPORTED,
-            raw_line=t.get("raw_line", ""),
+            raw_line=raw_line,
+            suggested_category=suggested_category,
+            suggested_subcategory=suggested_subcategory,
+            categorization_confidence=categorization_confidence,
+            categorization_source=categorization_source,
+            categorization_reason=categorization_reason,
         )
 
         imported += 1
 
     return {
-        "total_lines": parsed["total_lines"],
+        "total_lines": total_lines,
         "valid_transactions": len(transactions),
-        "invalid_lines": parsed["invalid_lines"],
+        "invalid_lines": invalid_lines,
         "imported_count": imported,
+        "matched_count": matched,
         "skipped_count": skipped,
     }

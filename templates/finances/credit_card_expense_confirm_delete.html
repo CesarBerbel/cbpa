@@ -1,0 +1,19 @@
+{% extends "base/base.html" %}
+
+{% block content %}
+
+<h1 class="h4 mb-4">Excluir gasto</h1>
+
+<div class="alert alert-warning">
+    Confirma excluir o gasto <strong>{{ expense.description }}</strong>?
+    Isso só será permitido se nenhuma fatura relacionada estiver efetivada.
+</div>
+
+<form method="post">
+    {% csrf_token %}
+
+    <button type="submit" class="btn btn-danger">Excluir</button>
+    <a href="{% url 'credit_card_detail' expense.card.id %}" class="btn btn-outline-secondary">Cancelar</a>
+</form>
+
+{% endblock %}

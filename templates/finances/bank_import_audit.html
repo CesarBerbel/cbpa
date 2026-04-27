@@ -12,6 +12,8 @@
             <th class="fw-semibold">Conta</th>
             <th class="fw-semibold">Descrição</th>
             <th class="fw-semibold text-end">Valor</th>
+            <th class="fw-semibold">Categoria sugerida</th>
+            <th class="fw-semibold">Origem</th>
             <th class="fw-semibold text-center">Status</th>
             <th class="fw-semibold text-center">Movimento</th>
         </tr>
@@ -33,7 +35,29 @@
                     <span class="text-danger">- {{ item.amount }}</span>
                 {% endif %}
             </td>
+            <td>
+                {% if item.suggested_category %}
+                    {{ item.suggested_category.name }}
+                    {% if item.suggested_subcategory %}
+                        / {{ item.suggested_subcategory.name }}
+                    {% endif %}
+                {% else %}
+                    -
+                {% endif %}
+            </td>
 
+            <td>
+                {% if item.categorization_source %}
+                    {{ item.categorization_source }}
+                    {% if item.categorization_confidence %}
+                        <span class="text-muted">
+                            {{ item.categorization_confidence }}
+                        </span>
+                    {% endif %}
+                {% else %}
+                    -
+                {% endif %}
+            </td>
             <td class="text-center">
                 {% if item.status == "IMPORTED" %}
                     <span class="badge bg-primary">Importado</span>
