@@ -166,9 +166,11 @@ class FinancialSubcategoryAdmin(admin.ModelAdmin):
         "company__name",
     ]
 
+
 # =========================================
 # CREDIT CARD
 # =========================================
+
 
 @admin.register(CreditCard)
 class CreditCardAdmin(admin.ModelAdmin):
@@ -190,6 +192,7 @@ class CreditCardAdmin(admin.ModelAdmin):
 # =========================================
 # CREDIT CARD EXPENSE
 # =========================================
+
 
 @admin.register(CreditCardExpense)
 class CreditCardExpenseAdmin(admin.ModelAdmin):
@@ -213,6 +216,7 @@ class CreditCardExpenseAdmin(admin.ModelAdmin):
 # INSTALLMENT INLINE
 # =========================================
 
+
 class CreditCardInstallmentInline(admin.TabularInline):
     model = CreditCardInstallment
     extra = 0
@@ -230,6 +234,7 @@ class CreditCardInstallmentInline(admin.TabularInline):
 # CREDIT CARD INVOICE
 # =========================================
 
+
 @admin.register(CreditCardInvoice)
 class CreditCardInvoiceAdmin(admin.ModelAdmin):
     list_display = (
@@ -242,12 +247,14 @@ class CreditCardInvoiceAdmin(admin.ModelAdmin):
         "status",
     )
     list_filter = ("card", "status")
-    date_hierarchy = "reference_month" 
+    date_hierarchy = "reference_month"
     inlines = [CreditCardInstallmentInline]
+
 
 # =========================================
 # IMPORT AUDIT
 # =========================================
+
 
 @admin.register(BankStatementImport)
 class BankStatementImportAdmin(admin.ModelAdmin):

@@ -127,7 +127,9 @@ def finance_dashboard_view(request):
         company=company,
     )
 
-    credit_cards = CreditCard.objects.filter(company=company, is_active=True).select_related("payment_account")
+    credit_cards = CreditCard.objects.filter(
+        company=company, is_active=True
+    ).select_related("payment_account")
 
     return render(
         request,

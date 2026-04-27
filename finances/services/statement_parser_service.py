@@ -148,10 +148,7 @@ def parse_csv_statement(content):
             "invalid_lines": invalid,
         }
 
-    reader.fieldnames = [
-        field.strip().lower()
-        for field in reader.fieldnames
-    ]
+    reader.fieldnames = [field.strip().lower() for field in reader.fieldnames]
 
     for line_number, row in enumerate(reader, start=2):
         total += 1
@@ -173,9 +170,7 @@ def parse_csv_statement(content):
                 int(day),
             )
 
-            amount = Decimal(
-                raw_amount.strip().replace(".", "").replace(",", ".")
-            )
+            amount = Decimal(raw_amount.strip().replace(".", "").replace(",", "."))
 
         except (ValueError, TypeError):
             invalid += 1

@@ -119,7 +119,10 @@ OPENAI_TRANSACTION_CATEGORY_MODEL = os.getenv(
     "gpt-4o-mini",
 )
 
-ENABLE_AI_CATEGORY_SUGGESTIONS = os.getenv(
-    "ENABLE_AI_CATEGORY_SUGGESTIONS",
-    "False",
-) == "True"
+ENABLE_AI_CATEGORY_SUGGESTIONS = (
+    os.getenv(
+        "ENABLE_AI_CATEGORY_SUGGESTIONS",
+        "False",
+    )
+    == "True"
+)

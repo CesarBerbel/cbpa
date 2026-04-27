@@ -6,10 +6,10 @@ from django.utils import timezone
 from companies.models import Company
 from accounts.models import User
 
-
 # =========================================
 # BANK
 # =========================================
+
 
 class Bank(models.Model):
     company = models.ForeignKey(
@@ -43,6 +43,7 @@ class Bank(models.Model):
 # ACCOUNT
 # =========================================
 
+
 class FinancialAccount(models.Model):
     company = models.ForeignKey(
         Company,
@@ -51,7 +52,7 @@ class FinancialAccount(models.Model):
     )
 
     bank = models.ForeignKey(
-        'Bank',
+        "Bank",
         on_delete=models.CASCADE,
         related_name="accounts",
     )
@@ -88,6 +89,7 @@ class FinancialAccount(models.Model):
 # =========================================
 # CATEGORY (ANTES DE MOVEMENT)
 # =========================================
+
 
 class FinancialCategory(models.Model):
     class MovementType(models.TextChoices):
@@ -153,6 +155,7 @@ class FinancialSubcategory(models.Model):
 # =========================================
 # MOVEMENT
 # =========================================
+
 
 class FinancialMovement(models.Model):
     class MovementType(models.TextChoices):
@@ -259,6 +262,7 @@ class FinancialMovement(models.Model):
 # TRANSFER
 # =========================================
 
+
 class FinancialTransfer(models.Model):
     company = models.ForeignKey(
         Company,
@@ -299,6 +303,7 @@ class FinancialTransfer(models.Model):
 # =========================================
 # IMPORT AUDIT (COM IA)
 # =========================================
+
 
 class BankStatementImport(models.Model):
     class ImportStatus(models.TextChoices):
@@ -653,4 +658,4 @@ class CreditCardInstallment(models.Model):
         ]
 
     def __str__(self):
-        return f"{self.expense.description} {self.installment_number}/{self.installment_total}"    
+        return f"{self.expense.description} {self.installment_number}/{self.installment_total}"

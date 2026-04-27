@@ -72,19 +72,19 @@ urlpatterns = [
         financial_subcategory_create_view,
         name="financial_subcategory_create",
     ),
-    path("financeiro/cartoes/novo/", 
-         credit_card_create_view, 
-         name="credit_card_create"
+    path(
+        "financeiro/cartoes/novo/", credit_card_create_view, name="credit_card_create"
     ),
-    path("financeiro/cartoes/<int:card_id>/", 
-         credit_card_detail_view, 
-         name="credit_card_detail"
+    path(
+        "financeiro/cartoes/<int:card_id>/",
+        credit_card_detail_view,
+        name="credit_card_detail",
     ),
     path(
         "financeiro/cartoes/<int:card_id>/gastos/novo/",
         credit_card_expense_create_view,
         name="credit_card_expense_create",
-    ),    
+    ),
     path(
         "financeiro/cartoes/gastos/<int:expense_id>/excluir/",
         credit_card_expense_delete_view,

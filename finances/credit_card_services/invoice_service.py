@@ -35,12 +35,11 @@ def sync_invoice_payment_movement(invoice):
     """
     Create or update the financial movement linked to the invoice.
     """
-    total = (
-        invoice.installments.aggregate(
-            total=Sum("amount"),
-        )["total"]
-        or Decimal("0.00")
-    )
+    total = invoice.installments.aggregate(
+        total=Sum("amount"),
+    )[
+        "total"
+    ] or Decimal("0.00")
 
     invoice.total_amount = total
 
@@ -68,7 +67,9 @@ def sync_invoice_payment_movement(invoice):
         if movement.status != FinancialMovement.MovementStatus.PAID:
             movement.amount = total
             movement.due_date = invoice.due_date
-            movement.description = f"Fatura {invoice.card} {invoice.reference_month:%m/%Y}"
+            movement.description = (
+                f"Fatura {invoice.card} {invoice.reference_month:%m/%Y}"
+            )
             movement.save(
                 update_fields=[
                     "amount",

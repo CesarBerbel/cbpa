@@ -10,7 +10,7 @@ from finances.models import (
     FinancialCategory,
     FinancialMovement,
     FinancialSubcategory,
-    CreditCard, 
+    CreditCard,
     CreditCardExpense,
 )
 
@@ -395,6 +395,7 @@ class FinancialSubcategoryForm(forms.ModelForm):
                 company=company,
                 is_active=True,
             )
+
 
 class CreditCardForm(forms.ModelForm):
     """
