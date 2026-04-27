@@ -531,7 +531,7 @@ def financial_account_movement_create_view(request, account_id):
             elif recurrence_type == FinancialMovement.RecurrenceType.FIXED:
                 create_fixed_movement_template(
                     company=company,
-                    account=form.cleaned_data["account"],
+                    account=account,
                     movement_type=form.cleaned_data["movement_type"],
                     amount=form.cleaned_data["amount"],
                     due_date=form.cleaned_data["due_date"],
