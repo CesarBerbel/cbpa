@@ -1,14 +1,18 @@
 import json
+import logging
 import os
 from dataclasses import dataclass
 from decimal import Decimal
 from typing import Any
 
 
+logger = logging.getLogger(__name__)
+
+
 @dataclass
 class CategorySuggestion:
     """
-    Represents an AI or rule-based category suggestion.
+    Represents a category suggestion returned by rules or AI.
     """
 
     category: Any | None
@@ -45,7 +49,7 @@ def get_available_categories(company, movement_type):
 
 def suggest_by_local_rules(company, description, movement_type):
     """
-    Suggest category using deterministic local keyword rules.
+    Suggest a category using deterministic local keyword rules.
     """
     from finances.models import FinancialMovement
 
@@ -166,7 +170,7 @@ def call_openai_for_category_suggestion(company, description, movement_type, amo
     """
     Ask OpenAI for a category suggestion.
 
-    If OpenAI is not configured or fails, return None.
+    If OpenAI is not configured or fails, return None without breaking import.
     """
     from finances.models import FinancialSubcategory
 
@@ -262,6 +266,7 @@ def call_openai_for_category_suggestion(company, description, movement_type, amo
         )
 
     except Exception:
+        logger.exception("AI categorization failed.")
         return None
 
 
